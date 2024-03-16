@@ -6,7 +6,7 @@
     />
     <div class="login-container">
       <img :src="image" alt="Your Image" size:30 />
-      <h1>Pandora-TokensTool</h1>
+      <h4>Pandora-TokensTool</h4>
     </div>
     <div class="container">
       <div
@@ -64,6 +64,21 @@
     <!-- 页面结尾文字 -->
     <div class="bottom">
       <div style="text-align: center; transform: translateY(0vh)">
+        <div v-if="page == false">
+          <h3>
+            获取token
+            <a
+              href="https://chat.OpenAI.com/api/auth/session"
+              >官网地址
+            </a>
+            <a href="https://ai.fakeopen.com/auth">Pandora地址</a>
+            欢迎大家来扩展
+            <a href="https://github.com/Yanyutin753/PandoraNext-TokensTool"
+              >PandoraNext-TokensTool v0.4.8.1
+            </a>
+          </h3>
+        </div>
+        <div v-else>
           <h3>
             获取token
             <a
@@ -74,10 +89,11 @@
             <br />
             欢迎大家来扩展
             <a href="https://github.com/Yanyutin753/PandoraNext-TokensTool"
-              >PandoraNext-TokensTool v0.4.6
+              >PandoraNext-TokensTool v0.4.8.1
             </a>
           </h3>
         </div>
+      </div>
     </div>
   </div>
 </template>
@@ -94,6 +110,7 @@ export default {
     const password = ref("");
     const checked = ref("");
     const image = png;
+    const page = ref(true);
 
     onMounted(() => {
       const savedUsername = localStorage.getItem("savedUsername");
@@ -104,6 +121,9 @@ export default {
         username.value = savedUsername || "";
         password.value = savedPassword || "";
         checked.value = true;
+      }
+      if (window.innerWidth > 767) {
+        page.value = false;
       }
     });
 
@@ -120,20 +140,32 @@ export default {
         localStorage.removeItem("savedPassword");
         localStorage.removeItem("savedRemember");
       }
-      axios
-        .post(
-          `/api/login?userName=${username.value}&password=${password.value}`
-        )
-        .then((response) => {
-          if (response.data.code == 1) {
-            console.log("登录成功", response.data.data);
-            const token = response.data.data;
+      let setting = {
+        loginUsername: username.value,
+        loginPassword: password.value,
+      };
+      fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${setting}`,
+        },
+        body: JSON.stringify(setting),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.code === 1) {
+            // 修改此行，使用严格相等运算符
+            console.log("登录成功");
+            const token = data.data;
             localStorage.setItem("jwtToken", token);
             ElMessage("登录成功！");
             setTimeout(() => {
               if (window.innerWidth <= 1000) {
                 router.replace("/iphone");
-              } else router.replace("/");
+              } else {
+                router.replace("/");
+              }
             }, 1000);
           } else {
             console.error("登录失败");
@@ -152,6 +184,7 @@ export default {
       image,
       checked,
       submit,
+      page,
     };
   },
 };
@@ -192,7 +225,7 @@ body {
   height: auto;
   margin: 0 auto;
   background-color: #fff;
-  padding: 28px;
+  padding: 40px;
   transform: translateY(10vh);
   box-shadow: 0px 0px 3.5px rgba(0, 0, 0, 0.2);
   border-radius: 14px;
@@ -227,7 +260,7 @@ input[type="submit"]:hover {
 .login-container {
   color: #fff;
   margin-top: 3vh;
-  margin-bottom: 5vh;
+  margin-bottom: 7vh;
   background-color: #0ea27e;
   padding: 17.5px;
   border-radius: 25px;
@@ -238,7 +271,7 @@ input[type="submit"]:hover {
   align-items: center;
   flex-direction: row; /* 指定Flex容器的主轴方向，这里设置为水平方向 */
 }
-.login-container h1 {
+.login-container h4 {
   margin-right: 20px; /* 在文本和图像之间添加一些间距 */
   font-size: 35px;
 }
@@ -254,8 +287,13 @@ a {
 }
 
 h3 {
-  font-size: 17.5px;
+  font-size: 20.5px;
   color: #606266;
+}
+
+.van-field__label {
+  width: 120px;
+  font-size: 14.6px;
 }
 
 .bottom {
@@ -289,7 +327,7 @@ h3 {
     /* 隐藏水平滚动条 */
     flex-direction: column;
   }
-  .login-container h1 {
+  .login-container h4 {
     margin-right: 20px; /* 在文本和图像之间添加一些间距 */
     font-size: 30px;
   }
@@ -323,7 +361,7 @@ h3 {
   .userName {
     font-size: 14.6px;
   }
-  .login-container h1 {
+  .login-container h4 {
     margin-right: 7px;
     font-size: 28px;
     justify-content: center;
@@ -346,6 +384,10 @@ h3 {
     color: var(--el-message-text-color);
     overflow-wrap: anywhere;
     width: 41vw;
+  }
+  .van-field__label {
+    width: 84px;
+    font-size: 13px;
   }
 }
 </style>
